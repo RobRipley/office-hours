@@ -21,18 +21,28 @@ module {
     };
   };
 
-  // First principal that calls this function becomes admin, all other principals become users.
-  public func initialize(state : AccessControlState, caller : Principal, adminToken : Text, userProvidedToken : Text) {
+  // Passphrases
+  let adminToken = "charleshoskinson";
+  let userToken = "XRPto$10k";
+
+  // Initialize with passphrase check
+  // - Admin passphrase (first time only) → admin
+  // - User passphrase → user
+  // - Wrong passphrase → stays guest (blocked)
+  public func initialize(state : AccessControlState, caller : Principal, userProvidedToken : Text) {
     if (caller.isAnonymous()) { return };
     switch (state.userRoles.get(caller)) {
-      case (?_) {};
+      case (?_) {}; // Already registered, do nothing
       case (null) {
         if (not state.adminAssigned and userProvidedToken == adminToken) {
+          // First admin
           state.userRoles.add(caller, #admin);
           state.adminAssigned := true;
-        } else {
+        } else if (userProvidedToken == userToken) {
+          // Valid user passphrase
           state.userRoles.add(caller, #user);
         };
+        // Wrong passphrase = not added = stays guest (blocked)
       };
     };
   };
@@ -41,9 +51,7 @@ module {
     if (caller.isAnonymous()) { return #guest };
     switch (state.userRoles.get(caller)) {
       case (?role) { role };
-      case (null) {
-        Runtime.trap("User is not registered");
-      };
+      case (null) { #guest }; // Not registered = guest
     };
   };
 
