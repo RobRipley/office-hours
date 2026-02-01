@@ -1,0 +1,7 @@
+[package]
+name = "office-hours"
+version = "0.1.0"
+
+[dependencies]
+core = "0.4"
+prim = "0.2"
